@@ -655,6 +655,7 @@ function enableSpreadDragScroll(container) {
   let startScroll = 0;
 
   container.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "touch") return;
     isDown = true;
     dragged = false;
     startX = event.clientX;
@@ -663,13 +664,14 @@ function enableSpreadDragScroll(container) {
   });
 
   window.addEventListener("pointermove", (event) => {
-    if (!isDown) return;
+    if (!isDown || event.pointerType === "touch") return;
     const delta = event.clientX - startX;
     if (Math.abs(delta) > 4) dragged = true;
     container.scrollLeft = startScroll - delta;
   });
 
-  window.addEventListener("pointerup", () => {
+  window.addEventListener("pointerup", (event) => {
+    if (event.pointerType === "touch") return;
     isDown = false;
     container.classList.remove("dragging");
   });
