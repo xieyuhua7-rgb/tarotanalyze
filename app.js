@@ -347,8 +347,12 @@ function renderHistory() {
     .map((item) => {
       const cardSummary = (item.cards || []).map((entry) => {
         const card = tarotCards.find((cardItem) => cardItem.id === entry.cardId);
-        return `${entry.positionLabel} · ${card ? `${card.name} / ${card.nameEn}` : entry.cardId}`;
+        return `${entry.positionLabel} · ${card ? `${card.name} / ${card.nameEn}` : entry.cardId}（${entry.orientationLabel || "正位"}）`;
       }).join(" | ");
+
+      const aiInsightHtml = item.aiInsight
+        ? item.aiInsight.split(/\n+/).filter((line) => line.trim()).map((line) => `<p>${line.trim()}</p>`).join("")
+        : '<p class="empty-state">这次没有生成 AI 深度解读。</p>';
 
       return `
         <article class="history-item">
@@ -357,6 +361,14 @@ function renderHistory() {
           <p><strong>牌阵：</strong>${item.mode === "three" ? "三张牌" : "单牌"}</p>
           <p><strong>卡牌：</strong>${cardSummary}</p>
           <p><strong>个人解答：</strong>${item.personalNote || "未填写"}</p>
+          <details class="history-detail">
+            <summary>查看完整解析</summary>
+            ${generateAnalysis(item)}
+            <div class="ai-insight-history">
+              <strong>🔮 AI 深度解读</strong>
+              ${aiInsightHtml}
+            </div>
+          </details>
         </article>
       `;
     })
@@ -557,6 +569,17 @@ async function requestAiInsight(reading) {
   return content.trim();
 }
 
+function saveAiInsightForReading(readingId, text) {
+  const readings = loadReadings();
+  const index = readings.findIndex((item) => item.id === readingId);
+  if (index === -1) {
+    return;
+  }
+  readings[index].aiInsight = text;
+  saveReadings(readings);
+  renderHistory();
+}
+
 async function runAiInsight(reading) {
   aiInsightCard.classList.remove("hidden");
   aiInsightRetry.classList.add("hidden");
@@ -576,6 +599,8 @@ async function runAiInsight(reading) {
       .map((line) => `<p>${line.trim()}</p>`)
       .join("");
     revealStory(aiInsightBody, "p");
+    reading.aiInsight = text;
+    saveAiInsightForReading(reading.id, text);
   } catch (error) {
     aiInsightBody.innerHTML = `<p class="ai-insight-error">生成失败：${error.message}</p>`;
     aiInsightRetry.classList.remove("hidden");
@@ -587,7 +612,7 @@ function exportReadings() {
   const exportText = readings.map((item) => {
     const cardSummary = (item.cards || []).map((entry) => {
       const card = tarotCards.find((cardItem) => cardItem.id === entry.cardId);
-      return `${entry.positionLabel}: ${card ? `${card.name} / ${card.nameEn}` : entry.cardId}`;
+      return `${entry.positionLabel}: ${card ? `${card.name} / ${card.nameEn}` : entry.cardId}（${entry.orientationLabel || "正位"}）`;
     }).join("; ");
 
     return [
