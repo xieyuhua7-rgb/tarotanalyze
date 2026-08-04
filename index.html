@@ -3,17 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>星晖塔罗分析</title>
+    <title>Jen的塔罗分析</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <header class="hero">
+        <button type="button" id="ai-settings-toggle" class="settings-fab">⚙️</button>
         <div>
           <p class="eyebrow">✨ 神秘轻量记录系统</p>
-          <h1>🔮 Jen版塔罗分析</h1>
+          <h1>🔮 Jen的塔罗分析</h1>
           <p class="hero-text">
-            这里有牌意检索、快速抽牌、个人分析与抽牌记录，让你用更轻松的方式进入塔罗体验。如有失误纯属jen的个人水平问题，欢迎反馈。<br />
+            这里有牌意检索、快速抽牌、个人分析与抽牌记录，让你用更轻松的方式进入塔罗体验。切勿封建迷信，祝大家玩得愉快，欢迎反馈。<br />
           </p>
         </div>
         <div class="hero-card">
@@ -21,13 +22,6 @@
           <strong>根据牌意、元素与位置，为你生成一段简洁的解读。</strong>
         </div>
       </header>
-
-      <nav class="top-nav">
-        <button type="button" class="nav-btn active" data-view="draw">🔮 抽牌</button>
-        <button type="button" class="nav-btn" data-view="library">📖 牌意检索</button>
-        <button type="button" class="nav-btn" data-view="history">🗒️ 抽牌记录</button>
-        <button type="button" id="ai-settings-toggle" class="nav-btn ai-settings-btn">⚙️ AI 设置</button>
-      </nav>
 
       <div id="ai-settings-panel" class="ai-settings-panel hidden">
         <div class="row">
@@ -48,64 +42,101 @@
       </div>
 
       <main class="layout">
-        <section id="draw-view" class="panel view-panel active-view">
-          <div class="panel-title">
-            <h2>本次抽牌</h2>
-            <span>自动分析 + 个人分析</span>
+        <!-- 首页：抽牌 / 解牌 -->
+        <section id="screen-landing" class="screen panel">
+          <div class="landing-intro">
+            <p class="landing-eyebrow">今天想做点什么</p>
           </div>
-
-          <div class="quick-draw-panel">
-            <div id="spread-scroll" class="spread-scroll">
-              <div id="card-spread" class="card-spread"></div>
-            </div>
-            <div class="draw-actions">
-              <button type="button" id="shuffle-cards">开始洗牌</button>
-            </div>
-            <p id="deck-message" class="deck-message">点击"开始洗牌"，摆出你的牌阵。</p>
-            <div id="draw-results" class="draw-results"></div>
+          <div class="landing-choice">
+            <button type="button" class="landing-card" data-goto-screen="screen-mode">
+              <span class="landing-icon">🔮</span>
+              <span class="landing-title">抽牌</span>
+              <span class="landing-desc">静心问卜，抽一张属于此刻的牌</span>
+            </button>
+            <button type="button" class="landing-card" data-goto-screen="screen-interpret">
+              <span class="landing-icon">📖</span>
+              <span class="landing-title">解牌</span>
+              <span class="landing-desc">查牌意、看抽牌记录</span>
+            </button>
           </div>
+        </section>
 
-          <form id="reading-form">
-            <label>
-              抽牌时间
-              <input type="datetime-local" id="reading-time" required />
-            </label>
+        <!-- 选择抽牌方式 -->
+        <section id="screen-mode" class="screen panel hidden">
+          <button type="button" class="back-btn" data-back-screen="screen-landing">← 返回</button>
+          <h2 class="screen-title">选择抽牌方式</h2>
+          <div class="mode-choice">
+            <button type="button" class="mode-card" data-mode-value="single">
+              <strong>单抽</strong>
+              <span>抽一张牌，看看当下</span>
+            </button>
+            <button type="button" class="mode-card" data-mode-value="three">
+              <strong>三抽</strong>
+              <span>过去、现在、未来</span>
+            </button>
+          </div>
+        </section>
 
+        <!-- 写下问题 -->
+        <section id="screen-question" class="screen panel hidden">
+          <button type="button" class="back-btn" data-back-screen="screen-mode">← 返回</button>
+          <h2 class="screen-title">写下你的问题</h2>
+          <p class="calm-hint">🕯️ 先静下心来，把注意力放在你想问的事情上。想清楚了，再把问题写下来。</p>
+          <form id="question-form">
             <label>
               你的问题
-              <input type="text" id="question" placeholder="例如：我该如何面对这段关系？" required />
+              <textarea id="question" required placeholder="例如：我该如何面对这段关系？"></textarea>
             </label>
-
-            <label>
-              牌阵模式
-              <select id="spread-mode">
-                <option value="single">单牌模式</option>
-                <option value="three">三张牌模式</option>
-              </select>
-            </label>
-
-            <div id="single-card-group" class="spread-group">
-              <div class="row">
-                <label>
-                  牌名
-                  <input id="card-name" list="card-options" placeholder="点选下方牌阵，或手动输入牌名、英文名或关键词" />
-                </label>
-                <label>
-                  方向
-                  <select id="orientation">
-                    <option value="upright" selected>正位</option>
-                    <option value="reversed">逆位</option>
-                  </select>
-                </label>
-              </div>
-              <p class="position-note">位置：现在</p>
+            <div class="actions">
+              <button type="submit">开始抽牌 →</button>
             </div>
+          </form>
+        </section>
 
-            <div id="three-card-group" class="spread-group hidden">
+        <!-- 抽牌 -->
+        <section id="screen-draw" class="screen panel hidden">
+          <button type="button" class="back-btn" data-back-screen="screen-question">← 返回</button>
+          <h2 class="screen-title">抽牌</h2>
+
+          <div class="draw-mode-tabs">
+            <button type="button" class="draw-mode-tab active" data-draw-mode="digital">🔮 电子抽牌</button>
+            <button type="button" class="draw-mode-tab" data-draw-mode="manual">✋ 手动输入</button>
+          </div>
+
+          <div id="digital-draw-panel">
+            <p class="calm-hint">🕯️ 带着你的问题，凭直觉点选牌吧。</p>
+            <div class="quick-draw-panel">
+              <div id="spread-scroll" class="spread-scroll">
+                <div id="card-spread" class="card-spread"></div>
+              </div>
+              <div class="draw-actions">
+                <button type="button" id="shuffle-cards">开始洗牌</button>
+              </div>
+              <p id="deck-message" class="deck-message">点击"开始洗牌"，摆出你的牌阵。</p>
+              <div id="draw-results" class="draw-results"></div>
+            </div>
+          </div>
+
+          <div id="manual-draw-panel" class="hidden">
+            <p class="calm-hint">🕯️ 把你现实中抽到的牌选进来，正逆位也如实填写。</p>
+            <div id="single-input-row" class="row">
+              <label>
+                牌名
+                <input id="card-name" list="card-options" placeholder="输入牌名、英文名或关键词" />
+              </label>
+              <label>
+                方向
+                <select id="orientation">
+                  <option value="upright" selected>正位</option>
+                  <option value="reversed">逆位</option>
+                </select>
+              </label>
+            </div>
+            <div id="three-input-rows" class="hidden">
               <div class="row">
                 <label>
                   过去
-                  <input id="card-name-1" list="card-options" placeholder="点选下方牌阵，或手动输入" />
+                  <input id="card-name-1" list="card-options" placeholder="输入牌名" />
                 </label>
                 <label>
                   方向
@@ -118,7 +149,7 @@
               <div class="row">
                 <label>
                   现在
-                  <input id="card-name-2" list="card-options" placeholder="点选下方牌阵，或手动输入" />
+                  <input id="card-name-2" list="card-options" placeholder="输入牌名" />
                 </label>
                 <label>
                   方向
@@ -131,7 +162,7 @@
               <div class="row">
                 <label>
                   未来
-                  <input id="card-name-3" list="card-options" placeholder="点选下方牌阵，或手动输入" />
+                  <input id="card-name-3" list="card-options" placeholder="输入牌名" />
                 </label>
                 <label>
                   方向
@@ -142,29 +173,47 @@
                 </label>
               </div>
             </div>
-
             <datalist id="card-options"></datalist>
+            <p id="manual-hint-message" class="deck-message hidden">请先填写所有牌名，再进入下一步。</p>
+            <div id="selected-card-preview" class="selected-card-preview"></div>
+          </div>
 
+          <div class="visually-hidden">
+            <select id="spread-mode">
+              <option value="single">单牌模式</option>
+              <option value="three">三张牌模式</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button type="button" id="to-finish-btn" class="hidden">下一步 →</button>
+          </div>
+        </section>
+
+        <!-- 补充信息 -->
+        <section id="screen-finish" class="screen panel hidden">
+          <button type="button" class="back-btn" data-back-screen="screen-draw">← 返回</button>
+          <h2 class="screen-title">补充一点信息</h2>
+          <div id="finish-card-gallery" class="draw-results"></div>
+          <form id="finish-form">
             <label>
-              关键词
+              关键词（可选）
               <input type="text" id="keyword" placeholder="可选" />
             </label>
-
-            <div id="selected-card-preview" class="selected-card-preview"></div>
-
             <label>
-              个人解答
+              个人解答（可选）
               <textarea id="personal-notes" placeholder="把你的直觉、感受或具体行动写下。"></textarea>
             </label>
-
             <div class="actions">
-              <button type="submit">生成分析并保存</button>
-              <button type="button" id="reset-form">清空</button>
+              <button type="submit">生成分析 →</button>
             </div>
           </form>
+        </section>
 
+        <!-- 结果 -->
+        <section id="screen-result" class="screen panel hidden">
+          <h2 class="screen-title">解读结果</h2>
           <div id="analysis-result" class="analysis-card"></div>
-
           <div id="ai-insight" class="ai-insight-card hidden">
             <div class="ai-insight-header">
               <h3>🔮 AI 深度解读（通义千问）</h3>
@@ -172,30 +221,37 @@
             </div>
             <div id="ai-insight-body"></div>
           </div>
-        </section>
-
-        <section id="library-view" class="panel view-panel hidden">
-          <div class="panel-title">
-            <h2>牌意检索</h2>
-            <span>78 张牌 · 可搜索</span>
-          </div>
-          <label class="search-label">
-            <input id="card-search" type="text" placeholder="输入牌名、英文名或关键词" />
-          </label>
-          <div id="card-library" class="card-list"></div>
-          <div class="element-legend">
-            <h3>四大元素</h3>
-            <div id="element-guide"></div>
+          <div class="actions">
+            <button type="button" id="restart-btn">🔄 再来一次</button>
           </div>
         </section>
 
-        <section id="history-view" class="panel view-panel hidden">
-          <div class="panel-title">
-            <h2>抽牌记录</h2>
-            <span>时间 / 卡牌 / 问题 / 个人解答</span>
-            <button type="button" id="export-records">导出记录</button>
+        <!-- 解牌：牌意检索 + 抽牌记录 -->
+        <section id="screen-interpret" class="screen panel hidden">
+          <button type="button" class="back-btn" data-back-screen="screen-landing">← 返回</button>
+          <div class="interpret-tabs">
+            <button type="button" class="interpret-tab active" data-interpret-view="library-view">牌意检索</button>
+            <button type="button" class="interpret-tab" data-interpret-view="history-view">抽牌记录</button>
           </div>
-          <div id="reading-history" class="history-list"></div>
+
+          <div id="library-view" class="interpret-panel">
+            <label class="search-label">
+              <input id="card-search" type="text" placeholder="输入牌名、英文名或关键词" />
+            </label>
+            <div id="card-library" class="card-list"></div>
+            <div class="element-legend">
+              <h3>四大元素</h3>
+              <div id="element-guide"></div>
+            </div>
+          </div>
+
+          <div id="history-view" class="interpret-panel hidden">
+            <div class="panel-title">
+              <span>时间 / 卡牌 / 问题 / 个人解答</span>
+              <button type="button" id="export-records">导出记录</button>
+            </div>
+            <div id="reading-history" class="history-list"></div>
+          </div>
         </section>
       </main>
     </div>

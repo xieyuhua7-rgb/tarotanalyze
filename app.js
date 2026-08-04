@@ -166,21 +166,28 @@ const cardLibrary = document.getElementById("card-library");
 const cardSearchInput = document.getElementById("card-search");
 const elementGuide = document.getElementById("element-guide");
 const cardSelect = document.getElementById("card-name");
-const readingForm = document.getElementById("reading-form");
 const analysisResult = document.getElementById("analysis-result");
 const historyList = document.getElementById("reading-history");
-const resetButton = document.getElementById("reset-form");
 const exportButton = document.getElementById("export-records");
 const spreadModeSelect = document.getElementById("spread-mode");
-const singleCardGroup = document.getElementById("single-card-group");
-const threeCardGroup = document.getElementById("three-card-group");
-const cardOptionsList = document.getElementById("card-options");
 const selectedCardPreview = document.getElementById("selected-card-preview");
 const cardSpread = document.getElementById("card-spread");
 const spreadScroll = document.getElementById("spread-scroll");
 const deckMessage = document.getElementById("deck-message");
 const drawResults = document.getElementById("draw-results");
 const shuffleButton = document.getElementById("shuffle-cards");
+const questionForm = document.getElementById("question-form");
+const finishForm = document.getElementById("finish-form");
+const finishCardGallery = document.getElementById("finish-card-gallery");
+const toFinishBtn = document.getElementById("to-finish-btn");
+const restartBtn = document.getElementById("restart-btn");
+const digitalDrawPanel = document.getElementById("digital-draw-panel");
+const manualDrawPanel = document.getElementById("manual-draw-panel");
+const singleInputRow = document.getElementById("single-input-row");
+const threeInputRows = document.getElementById("three-input-rows");
+const manualHintMessage = document.getElementById("manual-hint-message");
+const cardOptionsList = document.getElementById("card-options");
+let currentDrawMode = "digital";
 
 const aiSettingsToggle = document.getElementById("ai-settings-toggle");
 const aiSettingsPanel = document.getElementById("ai-settings-panel");
@@ -252,15 +259,13 @@ function resolveCardId(value) {
   return tarotCards.find((card) => [card.name, card.nameEn, card.keywords, card.meaning, card.suit, card.element].join(" ").toLowerCase().includes(search))?.id || tarotCards[0].id;
 }
 
-function populateCardSelect() {
-  const options = tarotCards
-    .map((card) => `<option value="${card.name} / ${card.nameEn}"></option>`)
-    .join("");
-
+function populateCardOptions() {
   cardOptionsList.innerHTML = tarotCards
     .map((card) => `<option value="${card.name} / ${card.nameEn}"></option>`)
     .join("");
+}
 
+function clearCardInputs() {
   [cardSelect, document.getElementById("card-name-1"), document.getElementById("card-name-2"), document.getElementById("card-name-3")].forEach((input) => {
     input.value = "";
   });
@@ -305,37 +310,17 @@ function renderCardLibrary() {
     .join("");
 }
 
-function renderElementGuide() {
-  const guide = [
-    { element: "火", emoji: "🔥", color: "#e0784a", description: "火象征热情、行动与推动力。" },
-    { element: "水", emoji: "💧", color: "#4b7fa8", description: "水象征情绪、直觉与流动。" },
-    { element: "风", emoji: "🌬️", color: "#7b9a5a", description: "风象征思考、沟通与变化。" },
-    { element: "土", emoji: "🪨", color: "#a8793d", description: "土象征稳定、根基与现实。" }
-  ];
+const ELEMENT_GUIDE = [
+  { element: "火", emoji: "🔥", color: "#e0784a", description: "火象征热情、行动与推动力。" },
+  { element: "水", emoji: "💧", color: "#4b7fa8", description: "水象征情绪、直觉与流动。" },
+  { element: "风", emoji: "🌬️", color: "#7b9a5a", description: "风象征思考、沟通与变化。" },
+  { element: "土", emoji: "🪨", color: "#a8793d", description: "土象征稳定、根基与现实。" }
+];
 
-  elementGuide.innerHTML = guide
+function renderElementGuide() {
+  elementGuide.innerHTML = ELEMENT_GUIDE
     .map(({ element, emoji, color, description }) => `<p style="border-left-color: ${color};"><strong>${emoji} ${element}</strong>：${description}</p>`)
     .join("");
-}
-
-function syncSpreadModeUI() {
-  const isThreeCard = spreadModeSelect.value === "three";
-  singleCardGroup.classList.toggle("hidden", isThreeCard);
-  threeCardGroup.classList.toggle("hidden", !isThreeCard);
-}
-
-function updateSelectedCardPreview(sourceInput) {
-  const targetInput = sourceInput || cardSelect;
-  const cardId = resolveCardId(targetInput.value);
-  const card = getCardById(cardId);
-  const slotMatch = targetInput.id.match(/^card-name-(\d)$/);
-  const orientationSelect = document.getElementById(slotMatch ? `orientation-${slotMatch[1]}` : "orientation");
-  const isReversed = orientationSelect ? orientationSelect.value === "reversed" : false;
-  selectedCardPreview.innerHTML = `
-    <img class="${isReversed ? "reversed" : ""}" src="${getCardArtwork(card)}" alt="${card.name}" />
-    <p><strong>${card.name} / ${card.nameEn}</strong>${isReversed ? "（逆位）" : "（正位）"}</p>
-    <p>${card.meaning}</p>
-  `;
 }
 
 function loadReadings() {
@@ -422,55 +407,65 @@ function renderReadingCardGallery(cards) {
   `;
 }
 
+const ELEMENT_INSIGHT = {
+  火: "热情与推动力",
+  水: "情绪与直觉",
+  风: "思考与沟通",
+  土: "现实与稳定"
+};
+
+function renderElementNote() {
+  return `
+    <div class="element-note">
+      <strong>四大元素小贴士</strong>
+      ${ELEMENT_GUIDE.map(({ emoji, element, description }) => `<p>${emoji} <strong>${element}</strong>：${description}</p>`).join("")}
+    </div>
+  `;
+}
+
+function describeOrientationTone(orientation) {
+  return orientation === "reversed"
+    ? "此刻它以逆位出现，像是在提醒你先往内看一看，理清卡住的地方，而不必急着往外冲。"
+    : "它以正位出现，能量比较顺畅，适合顺着这股力量往前走。";
+}
+
+function describeElement(card) {
+  const insight = ELEMENT_INSIGHT[card.element];
+  return insight ? `带着${card.element}元素的${insight}，` : "";
+}
+
 function generateAnalysis(reading) {
   const cardGallery = renderReadingCardGallery(reading.cards);
-  const cardSummaries = reading.cards.map((entry) => {
-    const card = tarotCards.find((cardItem) => cardItem.id === entry.cardId);
-    const positionLabel = entry.positionLabel || "位置";
-    const orientationLabel = entry.orientationLabel || "正位";
-    return `${positionLabel}：${card ? `${card.name} / ${card.nameEn}` : entry.cardId}（${card ? card.element : "未知元素"}，${orientationLabel}）—— ${card ? card.summary : "暂无说明"}`;
-  });
+  const cards = reading.cards.map((entry) => ({
+    entry,
+    card: tarotCards.find((cardItem) => cardItem.id === entry.cardId)
+  }));
 
-  const orientationText = reading.orientation === "reversed"
-    ? "逆位意味着当前更需要调整心态，避免被旧习惯牵着走。"
-    : "正位则更偏向于顺着此牌的能量推进，适合直接行动。";
+  const personalNoteLine = reading.personalNote
+    ? `你写下的直觉是："${reading.personalNote}"——不妨把它和上面这段故事放在一起看，也许它们本就在互相印证。`
+    : "这次你还没有写下自己的直觉，不妨先停留一下，感受此刻心里冒出的第一反应，那也是故事的一部分。";
 
-  const elementGuideText = "火：热情与行动；水：情绪与直觉；风：思考与变化；土：稳定与根基。";
-
-  const personalNote = reading.personalNote
-    ? `你的个人解答是：${reading.personalNote}`
-    : "你还没有写下个人解答，留下一点直觉会让这次占卜更完整。";
+  const paragraphs = [`你问的是："${reading.question}"。`];
 
   if (reading.mode === "three") {
-    const detailedCards = reading.cards.map((entry) => {
-      const card = tarotCards.find((cardItem) => cardItem.id === entry.cardId);
-      const roleText = entry.positionLabel === "过去" ? "这是你过去的局势或已发生的力量。"
-        : entry.positionLabel === "现在" ? "这是当前最需要你关注的状态。"
-        : "这是可能正在推进的未来方向。";
-      const orientationHint = entry.orientation === "reversed"
-        ? "此牌在逆位时更强调调整、反思或重新审视。"
-        : "此牌在正位时更强调直接推动与显化。";
-      return `<p><strong>${entry.positionLabel}</strong>：${card ? `${card.name} / ${card.nameEn}` : entry.cardId}（${card ? card.element : "未知元素"}，${entry.orientationLabel}）。${roleText} ${orientationHint} ${card ? card.meaning : "暂无说明"}</p>`;
-    }).join("");
-
-    return `
-      <h3>三张牌分析</h3>
-      ${cardGallery}
-      <p><strong>问题：</strong>${reading.question}</p>
-      <p><strong>牌意：</strong>${detailedCards}</p>
-      <p><strong>四大元素含义：</strong>${elementGuideText}</p>
-      <p>${personalNote}</p>
-    `;
+    const [past, present, future] = cards;
+    paragraphs.push(`先从过去说起。那时的你，走在${past.card.name}（${past.entry.orientationLabel}）的能量里，${describeElement(past.card)}${past.card.meaning}${describeOrientationTone(past.entry.orientation)}`);
+    paragraphs.push(`带着这段过去，故事来到了现在。${present.card.name}（${present.entry.orientationLabel}）悄然浮现，${describeElement(present.card)}${present.card.meaning}${describeOrientationTone(present.entry.orientation)}`);
+    paragraphs.push(`顺着这股势头往前看，${future.card.name}（${future.entry.orientationLabel}）指向了可能的方向，${describeElement(future.card)}${future.card.meaning}${describeOrientationTone(future.entry.orientation)}`);
+  } else {
+    const single = cards[0];
+    paragraphs.push(`此刻浮现的是${single.card.name}（${single.entry.orientationLabel}），${describeElement(single.card)}${single.card.meaning}${single.card.summary}${describeOrientationTone(single.entry.orientation)}`);
   }
 
+  paragraphs.push(personalNoteLine);
+
   return `
-    <h3>单牌分析</h3>
+    <h3>${reading.mode === "three" ? "三张牌的故事" : "这张牌想对你说"}</h3>
     ${cardGallery}
-    <p><strong>问题：</strong>${reading.question}</p>
-    <p><strong>牌意：</strong>${cardSummaries.join("<br>")}</p>
-    <p><strong>四大元素含义：</strong>${elementGuideText}</p>
-    <p>${orientationText}</p>
-    <p>${personalNote}</p>
+    <div class="story">
+      ${paragraphs.map((text) => `<p>${text}</p>`).join("")}
+    </div>
+    ${renderElementNote()}
   `;
 }
 
@@ -497,7 +492,7 @@ function buildAiPrompt(reading) {
     cardLines,
     reading.personalNote ? `占卜者的个人直觉/解答：${reading.personalNote}` : "占卜者暂未写下个人直觉。",
     "",
-    "请结合以上信息，给出一段具体、有针对性的塔罗解读，字数在200-350字之间，语气温和但清晰，避免空泛的套话，可以适当给出具体建议。请直接输出解读内容，不要重复罗列牌名。"
+    "请不要逐张罗列牌意，也不要用关键词堆砌或清单式的格式。请像讲故事一样循序渐进地展开：如果是三张牌，就从过去自然过渡到现在、再到未来，让每张牌的含义成为故事的一部分、彼此呼应；如果是单张牌，就围绕这张牌的能量展开一段完整的叙述。语气温和、有画面感，字数在250-400字之间，可以在故事的最后自然地呼应占卜者的问题和个人直觉。请直接输出这段故事正文，不要加小标题，也不要重复罗列牌名或关键词。"
   ].join("\n");
 }
 
@@ -514,7 +509,7 @@ async function requestAiInsight(reading) {
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: "你是一位专业塔罗牌解读师，用中文给出简洁、有洞察力、语气温和但不含糊的解读。" },
+        { role: "system", content: "你是一位擅长讲故事的塔罗解读师，你的解读像一段娓娓道来的旅程，而不是逐条罗列牌意的清单。用中文写作，语气温和、有洞察力、有画面感。" },
         { role: "user", content: buildAiPrompt(reading) }
       ],
       temperature: 0.8,
@@ -563,6 +558,7 @@ async function runAiInsight(reading) {
       .filter((line) => line.trim())
       .map((line) => `<p>${line.trim()}</p>`)
       .join("");
+    revealStory(aiInsightBody, "p");
   } catch (error) {
     aiInsightBody.innerHTML = `<p class="ai-insight-error">生成失败：${error.message}</p>`;
     aiInsightRetry.classList.remove("hidden");
@@ -595,17 +591,103 @@ function exportReadings() {
   URL.revokeObjectURL(link.href);
 }
 
-function setActiveView(view) {
-  document.querySelectorAll(".view-panel").forEach((panel) => {
-    panel.classList.toggle("hidden", panel.id !== `${view}-view`);
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach((screen) => {
+    screen.classList.toggle("hidden", screen.id !== id);
   });
-  document.querySelectorAll(".nav-btn").forEach((button) => {
-    button.classList.toggle("active", button.dataset.view === view);
+  const target = document.getElementById(id);
+  target.classList.remove("screen-enter");
+  void target.offsetWidth;
+  target.classList.add("screen-enter");
+}
+
+function setInterpretView(view) {
+  document.querySelectorAll(".interpret-panel").forEach((panel) => {
+    panel.classList.toggle("hidden", panel.id !== view);
+  });
+  document.querySelectorAll(".interpret-tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.interpretView === view);
   });
 }
 
 function requiredPickCount() {
   return spreadModeSelect.value === "three" ? 3 : 1;
+}
+
+function getManualEntries() {
+  if (spreadModeSelect.value === "three") {
+    return [1, 2, 3].map((index) => ({
+      input: document.getElementById(`card-name-${index}`),
+      orientationSelect: document.getElementById(`orientation-${index}`),
+      positionLabel: POSITION_LABELS[index - 1]
+    }));
+  }
+  return [{
+    input: cardSelect,
+    orientationSelect: document.getElementById("orientation"),
+    positionLabel: "现在"
+  }];
+}
+
+function validateManualEntries() {
+  return getManualEntries().every((entry) => entry.input.value.trim().length > 0);
+}
+
+function renderManualGallery() {
+  return getManualEntries().map(({ input, orientationSelect, positionLabel }) => {
+    const card = getCardById(resolveCardId(input.value));
+    const isReversed = orientationSelect.value === "reversed";
+    return `
+      <div class="drawn-card-item">
+        <img class="${isReversed ? "reversed" : ""}" src="${getCardArtwork(card)}" alt="${card.name}" />
+        <p><strong>${positionLabel}</strong> · ${isReversed ? "逆位" : "正位"}</p>
+        <p>${card.name} / ${card.nameEn}</p>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderManualPreview() {
+  selectedCardPreview.innerHTML = getManualEntries().map(({ input, orientationSelect, positionLabel }) => {
+    const value = input.value.trim();
+    if (!value) {
+      return `
+        <div class="drawn-card-item placeholder">
+          <p><strong>${positionLabel}</strong></p>
+          <p>尚未填写</p>
+        </div>
+      `;
+    }
+    const card = getCardById(resolveCardId(value));
+    const isReversed = orientationSelect.value === "reversed";
+    return `
+      <div class="drawn-card-item">
+        <img class="${isReversed ? "reversed" : ""}" src="${getCardArtwork(card)}" alt="${card.name}" />
+        <p><strong>${positionLabel}</strong> · ${isReversed ? "逆位" : "正位"}</p>
+        <p>${card.name} / ${card.nameEn}</p>
+      </div>
+    `;
+  }).join("");
+}
+
+function setDrawMode(mode) {
+  currentDrawMode = mode;
+  document.querySelectorAll(".draw-mode-tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.drawMode === mode);
+  });
+  digitalDrawPanel.classList.toggle("hidden", mode !== "digital");
+  manualDrawPanel.classList.toggle("hidden", mode !== "manual");
+  manualHintMessage.classList.add("hidden");
+
+  if (mode === "manual") {
+    const isThree = spreadModeSelect.value === "three";
+    singleInputRow.classList.toggle("hidden", isThree);
+    threeInputRows.classList.toggle("hidden", !isThree);
+    toFinishBtn.classList.remove("hidden");
+    renderManualPreview();
+  } else {
+    toFinishBtn.classList.toggle("hidden", pickedCards.length < requiredPickCount());
+  }
 }
 
 function pickRandomSpread(size) {
@@ -713,13 +795,9 @@ function applyPickedCardsToForm() {
         orientationSelect.value = pick.orientation;
       }
     });
-    if (pickedCards.length) {
-      updateSelectedCardPreview(document.getElementById(`card-name-${pickedCards.length}`));
-    }
   } else if (pickedCards[0]) {
     cardSelect.value = `${pickedCards[0].card.name} / ${pickedCards[0].card.nameEn}`;
     document.getElementById("orientation").value = pickedCards[0].orientation;
-    updateSelectedCardPreview(cardSelect);
   }
 }
 
@@ -727,6 +805,15 @@ function triggerPopIn(el) {
   el.classList.remove("pop-in");
   void el.offsetWidth;
   el.classList.add("pop-in");
+}
+
+function revealStory(container, selector) {
+  container.querySelectorAll(selector).forEach((el, index) => {
+    el.classList.remove("story-line");
+    el.style.animationDelay = `${index * 0.35}s`;
+    void el.offsetWidth;
+    el.classList.add("story-line");
+  });
 }
 
 function renderDrawResults() {
@@ -741,6 +828,7 @@ function renderDrawResults() {
     `)
     .join("");
   triggerPopIn(drawResults);
+  toFinishBtn.classList.remove("hidden");
 }
 
 function handleSpreadCardClick(index) {
@@ -774,17 +862,58 @@ function resetSpread(reshuffle) {
   }
   pickedCards = [];
   drawResults.innerHTML = "";
+  toFinishBtn.classList.add("hidden");
   renderSpread();
   updateDeckMessageForProgress();
 }
 
-readingForm.addEventListener("submit", (event) => {
+document.querySelectorAll("[data-goto-screen]").forEach((button) => {
+  button.addEventListener("click", () => showScreen(button.dataset.gotoScreen));
+});
+
+document.querySelectorAll("[data-back-screen]").forEach((button) => {
+  button.addEventListener("click", () => showScreen(button.dataset.backScreen));
+});
+
+document.querySelectorAll(".mode-card").forEach((button) => {
+  button.addEventListener("click", () => {
+    spreadModeSelect.value = button.dataset.modeValue;
+    resetSpread(true);
+    showScreen("screen-question");
+  });
+});
+
+questionForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  setDrawMode("digital");
+  showScreen("screen-draw");
+});
+
+document.querySelectorAll(".draw-mode-tab").forEach((tab) => {
+  tab.addEventListener("click", () => setDrawMode(tab.dataset.drawMode));
+});
+
+toFinishBtn.addEventListener("click", () => {
+  if (currentDrawMode === "manual") {
+    if (!validateManualEntries()) {
+      manualHintMessage.classList.remove("hidden");
+      return;
+    }
+    finishCardGallery.innerHTML = renderManualGallery();
+  } else {
+    finishCardGallery.innerHTML = drawResults.innerHTML;
+  }
+  showScreen("screen-finish");
+});
+
+finishForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
+  const nowIso = new Date().toISOString();
   const reading = {
     id: Date.now().toString(),
-    createdAt: new Date().toISOString(),
-    readingTime: document.getElementById("reading-time").value,
+    createdAt: nowIso,
+    readingTime: nowIso,
     question: document.getElementById("question").value.trim(),
     mode: spreadModeSelect.value,
     cards: buildCardEntries(),
@@ -799,40 +928,48 @@ readingForm.addEventListener("submit", (event) => {
   saveReadings(readings);
   analysisResult.innerHTML = generateAnalysis(reading);
   triggerPopIn(analysisResult);
+  revealStory(analysisResult, ".story p");
   renderHistory();
   runAiInsight(reading);
-  readingForm.reset();
-  document.getElementById("reading-time").value = new Date().toISOString().slice(0, 16);
-  document.getElementById("orientation").value = "upright";
-  spreadModeSelect.value = "single";
-  syncSpreadModeUI();
-  resetSpread(true);
-  updateSelectedCardPreview();
+  showScreen("screen-result");
 });
 
-resetButton.addEventListener("click", () => {
-  readingForm.reset();
-  document.getElementById("reading-time").value = new Date().toISOString().slice(0, 16);
-  document.getElementById("orientation").value = "upright";
+restartBtn.addEventListener("click", () => {
+  document.getElementById("question").value = "";
+  document.getElementById("keyword").value = "";
+  document.getElementById("personal-notes").value = "";
+  ["orientation", "orientation-1", "orientation-2", "orientation-3"].forEach((id) => {
+    document.getElementById(id).value = "upright";
+  });
   spreadModeSelect.value = "single";
-  syncSpreadModeUI();
+  clearCardInputs();
   analysisResult.innerHTML = "";
   selectedCardPreview.innerHTML = "";
+  aiInsightCard.classList.add("hidden");
+  setDrawMode("digital");
   resetSpread(true);
+  showScreen("screen-landing");
 });
 
 exportButton.addEventListener("click", exportReadings);
 shuffleButton.addEventListener("click", () => resetSpread(true));
-spreadModeSelect.addEventListener("change", () => {
-  syncSpreadModeUI();
-  resetSpread(true);
-});
 cardSearchInput.addEventListener("input", renderCardLibrary);
-[cardSelect, document.getElementById("card-name-1"), document.getElementById("card-name-2"), document.getElementById("card-name-3")].forEach((input) => {
-  input.addEventListener("input", () => updateSelectedCardPreview(input));
+[
+  cardSelect,
+  document.getElementById("card-name-1"),
+  document.getElementById("card-name-2"),
+  document.getElementById("card-name-3"),
+  document.getElementById("orientation"),
+  document.getElementById("orientation-1"),
+  document.getElementById("orientation-2"),
+  document.getElementById("orientation-3")
+].forEach((input) => {
+  input.addEventListener("input", renderManualPreview);
+  input.addEventListener("change", renderManualPreview);
 });
-document.querySelectorAll(".nav-btn[data-view]").forEach((button) => {
-  button.addEventListener("click", () => setActiveView(button.dataset.view));
+
+document.querySelectorAll(".interpret-tab").forEach((tab) => {
+  tab.addEventListener("click", () => setInterpretView(tab.dataset.interpretView));
 });
 
 aiSettingsToggle.addEventListener("click", () => {
@@ -863,15 +1000,16 @@ aiInsightRetry.addEventListener("click", () => {
   }
 });
 
-populateCardSelect();
+clearCardInputs();
+populateCardOptions();
 renderCardLibrary();
 renderElementGuide();
 renderHistory();
-syncSpreadModeUI();
 resetSpread(true);
 enableSpreadDragScroll(spreadScroll);
-setActiveView("draw");
-document.getElementById("reading-time").value = new Date().toISOString().slice(0, 16);
+showScreen("screen-landing");
+setInterpretView("library-view");
+setDrawMode("digital");
 aiModelInput.value = getStoredModel();
 if (getStoredApiKey()) {
   aiApiKeyInput.placeholder = "已保存（再次输入可更新）";
