@@ -423,15 +423,32 @@ function renderElementNote() {
   `;
 }
 
-function describeOrientationTone(orientation) {
-  return orientation === "reversed"
-    ? "此刻它以逆位出现，像是在提醒你先往内看一看，理清卡住的地方，而不必急着往外冲。"
-    : "它以正位出现，能量比较顺畅，适合顺着这股力量往前走。";
-}
-
 function describeElement(card) {
   const insight = ELEMENT_INSIGHT[card.element];
   return insight ? `带着${card.element}元素的${insight}，` : "";
+}
+
+const REVERSED_FRAMING = {
+  火: "这份火热的劲头此刻好像被压住了，可能是犹豫、拖延，或是用力过猛烧过了头，值得你先想清楚卡在哪一步，而不是硬冲。",
+  水: "这份情绪或直觉此刻好像被压抑或搅乱了，可能是在逃避感受，或是陷得太深走不出来，值得你先给自己一点空间去梳理。",
+  风: "这份想法或沟通此刻好像卡住了，可能是想得太多却没说出口，或是判断被情绪带偏了，值得你先静下来理清思路。",
+  土: "这份现实的进展此刻好像停滞了，可能是过于固执，也可能是缺乏行动，值得你先看看是不是抓得太紧或太松。"
+};
+
+const UPRIGHT_FRAMING = {
+  火: "这份火热的能量此刻很顺畅，正是放手去做的好时机。",
+  水: "这份情绪与直觉此刻很清晰，值得你顺着感觉走。",
+  风: "这份想法此刻很通透，适合直接表达或沟通。",
+  土: "这份现实的基础此刻很稳固，适合踏实地往前推进。"
+};
+
+function describeCardInSituation(card, orientation) {
+  if (orientation === "reversed") {
+    const framing = REVERSED_FRAMING[card.element] || "这份能量此刻好像被卡住或压抑了，值得你先往回看看，理清楚问题出在哪，而不是勉强往前冲。";
+    return `${card.meaning}只是此刻它以逆位出现，${card.summary}${framing}`;
+  }
+  const framing = UPRIGHT_FRAMING[card.element] || "它以正位出现，能量比较顺畅，适合顺势而为。";
+  return `${card.meaning}${card.summary}${framing}`;
 }
 
 function generateAnalysis(reading) {
@@ -449,12 +466,12 @@ function generateAnalysis(reading) {
 
   if (reading.mode === "three") {
     const [past, present, future] = cards;
-    paragraphs.push(`先从过去说起。那时的你，走在${past.card.name}（${past.entry.orientationLabel}）的能量里，${describeElement(past.card)}${past.card.meaning}${past.card.summary}${describeOrientationTone(past.entry.orientation)}`);
-    paragraphs.push(`带着这段过去，故事来到了现在。${present.card.name}（${present.entry.orientationLabel}）悄然浮现，${describeElement(present.card)}${present.card.meaning}${present.card.summary}${describeOrientationTone(present.entry.orientation)}`);
-    paragraphs.push(`顺着这股势头往前看，${future.card.name}（${future.entry.orientationLabel}）指向了可能的方向，${describeElement(future.card)}${future.card.meaning}${future.card.summary}${describeOrientationTone(future.entry.orientation)}`);
+    paragraphs.push(`先从过去说起。那时的你，走在${past.card.name}（${past.entry.orientationLabel}）的能量里，${describeElement(past.card)}${describeCardInSituation(past.card, past.entry.orientation)}`);
+    paragraphs.push(`带着这段过去，故事来到了现在。${present.card.name}（${present.entry.orientationLabel}）悄然浮现，${describeElement(present.card)}${describeCardInSituation(present.card, present.entry.orientation)}`);
+    paragraphs.push(`顺着这股势头往前看，${future.card.name}（${future.entry.orientationLabel}）指向了可能的方向，${describeElement(future.card)}${describeCardInSituation(future.card, future.entry.orientation)}`);
   } else {
     const single = cards[0];
-    paragraphs.push(`此刻浮现的是${single.card.name}（${single.entry.orientationLabel}），${describeElement(single.card)}${single.card.meaning}${single.card.summary}${describeOrientationTone(single.entry.orientation)}`);
+    paragraphs.push(`此刻浮现的是${single.card.name}（${single.entry.orientationLabel}），${describeElement(single.card)}${describeCardInSituation(single.card, single.entry.orientation)}`);
   }
 
   paragraphs.push(personalNoteLine);
