@@ -449,9 +449,9 @@ function generateAnalysis(reading) {
 
   if (reading.mode === "three") {
     const [past, present, future] = cards;
-    paragraphs.push(`先从过去说起。那时的你，走在${past.card.name}（${past.entry.orientationLabel}）的能量里，${describeElement(past.card)}${past.card.meaning}${describeOrientationTone(past.entry.orientation)}`);
-    paragraphs.push(`带着这段过去，故事来到了现在。${present.card.name}（${present.entry.orientationLabel}）悄然浮现，${describeElement(present.card)}${present.card.meaning}${describeOrientationTone(present.entry.orientation)}`);
-    paragraphs.push(`顺着这股势头往前看，${future.card.name}（${future.entry.orientationLabel}）指向了可能的方向，${describeElement(future.card)}${future.card.meaning}${describeOrientationTone(future.entry.orientation)}`);
+    paragraphs.push(`先从过去说起。那时的你，走在${past.card.name}（${past.entry.orientationLabel}）的能量里，${describeElement(past.card)}${past.card.meaning}${past.card.summary}${describeOrientationTone(past.entry.orientation)}`);
+    paragraphs.push(`带着这段过去，故事来到了现在。${present.card.name}（${present.entry.orientationLabel}）悄然浮现，${describeElement(present.card)}${present.card.meaning}${present.card.summary}${describeOrientationTone(present.entry.orientation)}`);
+    paragraphs.push(`顺着这股势头往前看，${future.card.name}（${future.entry.orientationLabel}）指向了可能的方向，${describeElement(future.card)}${future.card.meaning}${future.card.summary}${describeOrientationTone(future.entry.orientation)}`);
   } else {
     const single = cards[0];
     paragraphs.push(`此刻浮现的是${single.card.name}（${single.entry.orientationLabel}），${describeElement(single.card)}${single.card.meaning}${single.card.summary}${describeOrientationTone(single.entry.orientation)}`);
