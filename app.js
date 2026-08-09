@@ -241,6 +241,12 @@ function getCardArtwork(card) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value == null ? "" : String(value);
+  return div.innerHTML;
+}
+
 function getCardById(id) {
   return tarotCards.find((card) => card.id === id) || tarotCards[0];
 }
@@ -351,16 +357,16 @@ function renderHistory() {
       }).join(" | ");
 
       const aiInsightHtml = item.aiInsight
-        ? item.aiInsight.split(/\n+/).filter((line) => line.trim()).map((line) => `<p>${line.trim()}</p>`).join("")
+        ? item.aiInsight.split(/\n+/).filter((line) => line.trim()).map((line) => `<p>${escapeHtml(line.trim())}</p>`).join("")
         : '<p class="empty-state">这次没有生成 AI 深度解读。</p>';
 
       return `
         <article class="history-item">
           <strong>${new Date(item.readingTime || item.createdAt).toLocaleString()}</strong>
-          <p><strong>问题：</strong>${item.question}</p>
+          <p><strong>问题：</strong>${escapeHtml(item.question)}</p>
           <p><strong>牌阵：</strong>${item.mode === "three" ? "三张牌" : "单牌"}</p>
           <p><strong>卡牌：</strong>${cardSummary}</p>
-          <p><strong>个人解答：</strong>${item.personalNote || "未填写"}</p>
+          <p><strong>个人解答：</strong>${item.personalNote ? escapeHtml(item.personalNote) : "未填写"}</p>
           <details class="history-detail">
             <summary>查看完整解析</summary>
             ${generateAnalysis(item)}
@@ -471,10 +477,10 @@ function generateAnalysis(reading) {
   }));
 
   const personalNoteLine = reading.personalNote
-    ? `你写下的直觉是："${reading.personalNote}"——不妨把它和上面这段故事放在一起看，也许它们本就在互相印证。`
+    ? `你写下的直觉是："${escapeHtml(reading.personalNote)}"——不妨把它和上面这段故事放在一起看，也许它们本就在互相印证。`
     : "这次你还没有写下自己的直觉，不妨先停留一下，感受此刻心里冒出的第一反应，那也是故事的一部分。";
 
-  const paragraphs = [`你问的是："${reading.question}"。`];
+  const paragraphs = [`你问的是："${escapeHtml(reading.question)}"。`];
 
   if (reading.mode === "three") {
     const [past, present, future] = cards;
@@ -596,13 +602,13 @@ async function runAiInsight(reading) {
     aiInsightBody.innerHTML = text
       .split(/\n+/)
       .filter((line) => line.trim())
-      .map((line) => `<p>${line.trim()}</p>`)
+      .map((line) => `<p>${escapeHtml(line.trim())}</p>`)
       .join("");
     revealStory(aiInsightBody, "p");
     reading.aiInsight = text;
     saveAiInsightForReading(reading.id, text);
   } catch (error) {
-    aiInsightBody.innerHTML = `<p class="ai-insight-error">生成失败：${error.message}</p>`;
+    aiInsightBody.innerHTML = `<p class="ai-insight-error">生成失败：${escapeHtml(error.message)}</p>`;
     aiInsightRetry.classList.remove("hidden");
   }
 }
