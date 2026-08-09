@@ -820,6 +820,91 @@ function enableSpreadDragScroll(container) {
   }, true);
 }
 
+let audioContext = null;
+
+function getAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return null;
+  }
+  if (!audioContext) {
+    audioContext = new AudioContextClass();
+  }
+  if (audioContext.state === "suspended") {
+    audioContext.resume().catch(() => {});
+  }
+  return audioContext;
+}
+
+function playTone({ frequency, endFrequency, duration = 0.15, type = "sine", volume = 0.15 }) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+    if (endFrequency) {
+      oscillator.frequency.exponentialRampToValueAtTime(endFrequency, ctx.currentTime + duration);
+    }
+    gain.gain.setValueAtTime(volume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + duration);
+  } catch (error) {
+    // 忽略音频播放失败，不影响主流程
+  }
+}
+
+function playShuffleSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const duration = 0.45;
+    const bufferSize = Math.floor(ctx.sampleRate * duration);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i += 1) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 1000;
+    filter.Q.value = 0.7;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.14, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start();
+  } catch (error) {
+    // 忽略音频播放失败，不影响主流程
+  }
+}
+
+function playFlipSound() {
+  playTone({ frequency: 620, endFrequency: 320, duration: 0.14, type: "triangle", volume: 0.18 });
+}
+
+function playSwipeTick() {
+  playTone({ frequency: 900, endFrequency: 700, duration: 0.05, type: "sine", volume: 0.05 });
+}
+
+function triggerHaptic(pattern) {
+  if (navigator.vibrate) {
+    try {
+      navigator.vibrate(pattern);
+    } catch (error) {
+      // 部分浏览器/权限下会抛错，忽略即可
+    }
+  }
+}
+
 function updateDeckMessageForProgress() {
   const need = requiredPickCount();
   if (pickedCards.length >= need) {
@@ -893,6 +978,9 @@ function handleSpreadCardClick(index) {
   entry.flipped = true;
   entry.orientation = Math.random() < 0.5 ? "reversed" : "upright";
   pickedCards.push({ card: entry.card, orientation: entry.orientation });
+  playFlipSound();
+  triggerHaptic(20);
+  shuffleButton.classList.add("hidden");
   applyPickedCardsToForm();
   renderSpread();
   updateDeckMessageForProgress();
@@ -911,8 +999,27 @@ function resetSpread(reshuffle) {
   pickedCards = [];
   drawResults.innerHTML = "";
   toFinishBtn.classList.add("hidden");
+  shuffleButton.classList.remove("hidden");
   renderSpread();
   updateDeckMessageForProgress();
+}
+
+function performShuffle() {
+  if (shuffleButton.disabled) {
+    return;
+  }
+  shuffleButton.disabled = true;
+  playShuffleSound();
+  triggerHaptic([15, 40, 15, 40, 15]);
+  cardSpread.classList.add("shuffling");
+  spreadScroll.classList.add("shuffling-active");
+  deckMessage.textContent = "正在洗牌……";
+  window.setTimeout(() => {
+    cardSpread.classList.remove("shuffling");
+    spreadScroll.classList.remove("shuffling-active");
+    resetSpread(true);
+    shuffleButton.disabled = false;
+  }, 550);
 }
 
 document.querySelectorAll("[data-goto-screen]").forEach((button) => {
@@ -1000,7 +1107,16 @@ restartBtn.addEventListener("click", () => {
 });
 
 exportButton.addEventListener("click", exportReadings);
-shuffleButton.addEventListener("click", () => resetSpread(true));
+shuffleButton.addEventListener("click", performShuffle);
+
+let lastSwipeSoundTime = 0;
+spreadScroll.addEventListener("scroll", () => {
+  const now = Date.now();
+  if (now - lastSwipeSoundTime > 220) {
+    lastSwipeSoundTime = now;
+    playSwipeTick();
+  }
+});
 cardSearchInput.addEventListener("input", renderCardLibrary);
 [
   cardSelect,
