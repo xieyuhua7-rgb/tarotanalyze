@@ -236,6 +236,24 @@ select {
   animation: popIn 0.4s ease;
 }
 
+.app-shell.focus-mode {
+  max-width: none;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.app-shell.focus-mode .layout {
+  min-height: 100vh;
+}
+
+.app-shell.focus-mode .panel {
+  min-height: 100vh;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  box-shadow: none;
+}
+
 .settings-fab {
   position: absolute;
   top: 16px;

@@ -7,38 +7,40 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="app-shell">
-      <header class="hero">
-        <button type="button" id="ai-settings-toggle" class="settings-fab">⚙️</button>
-        <div>
-          <p class="eyebrow">✨ 神秘轻量记录系统</p>
-          <h1>🔮 Jen的塔罗分析</h1>
-          <p class="hero-text">
-            这里有牌意检索、快速抽牌、个人分析与抽牌记录，让你用更轻松的方式进入塔罗体验。切勿封建迷信，祝大家玩得愉快，欢迎反馈。<br />
-          </p>
-        </div>
-        <div class="hero-card">
-          <p>自动分析</p>
-          <strong>根据牌意、元素与位置，为你生成一段简洁的解读。</strong>
-        </div>
-      </header>
+    <div class="app-shell" id="app-shell">
+      <div id="app-header" class="app-header">
+        <header class="hero">
+          <button type="button" id="ai-settings-toggle" class="settings-fab">⚙️</button>
+          <div>
+            <p class="eyebrow">✨ 神秘轻量记录系统</p>
+            <h1>🔮 Jen的塔罗分析</h1>
+            <p class="hero-text">
+              这里有牌意检索、快速抽牌、个人分析与抽牌记录，让你用更轻松的方式进入塔罗体验。切勿封建迷信，祝大家玩得愉快，欢迎反馈。<br />
+            </p>
+          </div>
+          <div class="hero-card">
+            <p>自动分析</p>
+            <strong>根据牌意、元素与位置，为你生成一段简洁的解读。</strong>
+          </div>
+        </header>
 
-      <div id="ai-settings-panel" class="ai-settings-panel hidden">
-        <div class="row">
-          <label>
-            阿里云百炼 API Key
-            <input type="password" id="ai-api-key" placeholder="sk-..." autocomplete="off" />
-          </label>
-          <label>
-            模型名称
-            <input type="text" id="ai-model" placeholder="qwen-turbo" />
-          </label>
+        <div id="ai-settings-panel" class="ai-settings-panel hidden">
+          <div class="row">
+            <label>
+              阿里云百炼 API Key
+              <input type="password" id="ai-api-key" placeholder="sk-..." autocomplete="off" />
+            </label>
+            <label>
+              模型名称
+              <input type="text" id="ai-model" placeholder="qwen-turbo" />
+            </label>
+          </div>
+          <div class="actions">
+            <button type="button" id="ai-settings-save">保存</button>
+            <button type="button" id="ai-settings-clear">清除密钥</button>
+          </div>
+          <p class="ai-settings-note">密钥仅保存在你本机浏览器的本地存储中，只会直接发送给阿里云官方接口，不经过任何其他服务器。可用淘宝/支付宝账号登录 <a href="https://bailian.console.aliyun.com/" target="_blank" rel="noopener">bailian.console.aliyun.com</a> 申请密钥，具体免费额度以登录后账户页面显示为准。请勿在公共或共享电脑上保存密钥。</p>
         </div>
-        <div class="actions">
-          <button type="button" id="ai-settings-save">保存</button>
-          <button type="button" id="ai-settings-clear">清除密钥</button>
-        </div>
-        <p class="ai-settings-note">密钥仅保存在你本机浏览器的本地存储中，只会直接发送给阿里云官方接口，不经过任何其他服务器。可用淘宝/支付宝账号登录 <a href="https://bailian.console.aliyun.com/" target="_blank" rel="noopener">bailian.console.aliyun.com</a> 申请密钥，具体免费额度以登录后账户页面显示为准。请勿在公共或共享电脑上保存密钥。</p>
       </div>
 
       <main class="layout">

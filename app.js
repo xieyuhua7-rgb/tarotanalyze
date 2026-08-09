@@ -647,6 +647,12 @@ function showScreen(id) {
   target.classList.remove("screen-enter");
   void target.offsetWidth;
   target.classList.add("screen-enter");
+
+  const isLanding = id === "screen-landing";
+  const appHeader = document.getElementById("app-header");
+  const appShell = document.getElementById("app-shell");
+  if (appHeader) appHeader.classList.toggle("hidden", !isLanding);
+  if (appShell) appShell.classList.toggle("focus-mode", !isLanding);
 }
 
 function setInterpretView(view) {
